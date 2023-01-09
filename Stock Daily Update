@@ -7,12 +7,12 @@ d= datetime.date(2023,1,6)
 
 import yfinance as yf
 
-data = yf.download('Stock Quote', str(d))
+data = yf.download('Stock Quote', str(today))
 StockPrice = data['Close']
 print("\nStockPrice:")
 print(StockPrice)
 
-data1 = yf.download('EURJPY=X', str(d))
+data1 = yf.download('EURJPY=X', str(today))
 Exr = data1['Close']
 ExchangeRate = "{:.2f}".format(Exr[1])
 print(ExchangeRate)
