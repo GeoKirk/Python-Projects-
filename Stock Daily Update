@@ -1,0 +1,56 @@
+import datetime
+from datetime import date
+from smtplib import SMTP
+
+today = str(date.today())
+d= datetime.date(2023,1,6)
+
+import yfinance as yf
+
+data = yf.download('Stock Quote', str(d))
+StockPrice = data['Close']
+print("\nStockPrice:")
+print(StockPrice)
+
+data1 = yf.download('EURJPY=X', str(d))
+Exr = data1['Close']
+ExchangeRate = "{:.2f}".format(Exr[1])
+print(ExchangeRate)
+
+# Options
+Granted_Options: float = 47  # Stock Options Granted by the company
+Options: float = 100  # 100 Shares per 1 option
+Exercise_Price: float = 1  # Exercise price 1 
+StockQuantity = float(Granted_Options) * float(Options)
+
+Portfolio_Value1 = float(StockQuantity) * float(StockPrice) - float(Granted_Options) * float(Exercise_Price)
+Portfolio_Value2 = float(Portfolio_Value1) / float(ExchangeRate)
+print(StockQuantity)
+print("\nPortfolioValueEUR:")
+Eur = "EUR {:,.2f}".format(Portfolio_Value2)
+print(Eur)
+
+import smtplib
+from email.message import EmailMessage
+
+email = EmailMessage()
+myemail = 'myemail1@email.com'
+mymail2='myemailmail.com'
+
+email['Subject'] = 'Stock Price today'
+email['From'] = myemail
+email['To'] = mymail2
+
+email.set_content("\n Portfolio Value in " + str(Eur) + " " + "on  " + str(today) +" " +
+                  "\n The Stock Price is "+ str(float(StockPrice)) +" JPY" +
+                  "\n EUR to JPY Exchange rate is "+ str(float(ExchangeRate)) + " JPY/EUR" +
+                   "\n Kind Regards, Your Investment Consultant")
+
+s: SMTP = smtplib.SMTP(host='smtp-mail.outlook.com', port=587)
+s.starttls()
+s.login('email', 'password')
+
+s.send_message(email)
+s.quit()
+
+
