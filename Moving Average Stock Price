@@ -1,0 +1,48 @@
+import pandas as pd
+import yfinance as yf
+import matplotlib.pyplot as plt
+
+# Define the stock ticker symbol and time period
+ticker = "AAPL"  # Example: Apple
+start_date = "2022-01-01"
+end_date = "2023-06-01"
+
+# Retrieve stock data from Yahoo Finance
+stock_data = yf.download(ticker, start=start_date, end=end_date)
+
+# Create a DataFrame with the 'Date' and 'StockPrice' columns
+data = {'Date': stock_data.index,
+        'StockPrice': stock_data['Close']}
+df = pd.DataFrame(data)
+
+# Convert the 'Date' column to datetime type (if not already done)
+df['Date'] = pd.to_datetime(df['Date'])
+
+# Set the 'Date' column as the index
+df.set_index('Date', inplace=True)
+
+# Calculate the moving average with a window of 3
+window_size = 3
+moving_avg = df['StockPrice'].rolling(window=window_size).mean()
+
+# Print the original DataFrame and the moving averages
+print(df)
+print(moving_avg)
+
+
+# Plot the stock price and moving average
+plt.figure(figsize=(10, 6))
+plt.plot(df.index, df['StockPrice'], label='Rakuten Group Japan')
+plt.plot(moving_avg.index, moving_avg, label='Moving Average')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.title('Stock Price with Moving Average')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Save the plot as a PNG file
+plt.savefig('stock_price_plot.png')
+
+# Provide a message indicating the successful save
+print("Plot saved as stock_price_plot.png")
