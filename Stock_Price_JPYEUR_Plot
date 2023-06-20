@@ -1,0 +1,84 @@
+import datetime
+from datetime import date
+import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Get the current date
+TODAY = datetime.date.today()
+
+# Define the stock ticker symbol and time period
+ticker = "4755.T"  # Example: Rakuten Japan
+start_date = "2022-01-01"
+end_date = TODAY
+
+# Retrieve stock data from Yahoo Finance
+stock_data = yf.download(ticker, start=start_date, end=end_date)
+
+# Retrieve exchange rate from Yahoo Finance
+fx_data = yf.download('EURJPY=X', start=start_date, end=end_date)
+
+# Create a DataFrame with the 'Date' and 'StockPrice' columns
+df_stock = pd.DataFrame({'StockPrice': stock_data['Close']}, index=stock_data.index)
+
+# Add your stock purchase information
+purchase_dates = ['2022-11-10', '2023-01-10', '2023-04-10', '2023-06-09'] #Add Excercise date
+purchase_prices = [663, 619, 638, 544.3] #Add Locked price 
+purchase_quantities = [100, 100, 100, 100]  # Update with the respective quantities share value per option
+
+# Create a DataFrame with the 'PurchaseDate', 'PurchasePrice', and 'Quantity' columns
+df_purchase = pd.DataFrame({
+    'PurchaseDate': pd.to_datetime(purchase_dates),
+    'PurchasePrice': purchase_prices,
+    'Quantity': purchase_quantities
+})
+
+# Reset the index of the stock data DataFrame
+df_stock.reset_index(inplace=True)
+
+# Merge the stock and purchase DataFrames based on the 'Date' column
+df_merged = pd.merge(df_stock, df_purchase, left_on='Date', right_on='PurchaseDate', how='left')
+
+# Create a DataFrame with the 'Date' and 'ExchangeRate' columns
+df_fx = pd.DataFrame({'ExchangeRate': fx_data['Close']}, index=fx_data.index)
+
+# Merge the stock data with the exchange rate data based on the index
+merged_df = pd.merge(df_merged, df_fx, left_on='Date', right_index=True, how='inner')
+
+# Calculate the portfolio value in EUR
+portfolio_value_eur = merged_df['StockPrice'] * 700 / merged_df['ExchangeRate']
+
+# Create a DataFrame with the 'Date' and 'PortfolioValueEUR' columns
+df_portfolio = pd.DataFrame({'Date': merged_df['Date'], 'PortfolioValueEUR': portfolio_value_eur})
+
+# Create a figure and two axes objects
+fig, ax1 = plt.subplots(figsize=(10, 6))
+ax2 = ax1.twinx()
+
+# Plot the portfolio value
+ax1.plot(df_portfolio['Date'], df_portfolio['PortfolioValueEUR'], color='g', label='Portfolio Value (EUR)')
+
+# Plot the stock price
+ax2.plot(df_merged['Date'], df_merged['StockPrice'], color='r', label='Stock Price')
+
+# Plot the purchase points
+for index, purchase in df_purchase.iterrows():
+    purchase_date = purchase['PurchaseDate']
+    purchase_price = purchase['PurchasePrice']
+    quantity = purchase['Quantity']
+    ax2.plot(purchase_date, purchase_price, 'bo', label='Purchase')
+    ax2.annotate(f'{quantity}', (purchase_date, purchase_price), textcoords="offset points",
+                 xytext=(0, 10), ha='center', fontweight = 'bold') # Add bold font to purchase prices
+
+# Set the labels and title
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Portfolio Value (EUR)')
+ax2.set_ylabel('Rakuten Stock Price')
+ax1.set_title('Portfolio Value EUR and Rakuten Stock Price Trend')
+
+# Add legend
+ax1.legend(loc='upper left')
+ax2.legend(loc='upper right')
+
+# Display the plot
+plt.show()
