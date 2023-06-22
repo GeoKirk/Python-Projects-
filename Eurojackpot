@@ -1,0 +1,47 @@
+import pandas as pd
+from itertools import combinations
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def get_existing_combinations(excel_file):
+    # Read the Excel file
+    data = pd.read_excel(excel_file)
+
+    # Extract the specified columns from the DataFrame
+    selected_data = data[["q1", "q2", "q3", "q4", "q5", "q6", "q7"]]
+
+    # Convert the selected data to a set of tuples
+    existing_combinations = set(tuple(row) for row in selected_data.values)
+
+    return existing_combinations
+
+def count_unique_combinations(excel_file):
+    numbers_q1_to_q5 = list(range(1, 51))  # Range for columns q1 to q5: 1 to 50
+    numbers_q6_to_q7 = list(range(1, 13))  # Range for columns q6 to q7: 1 to 12
+
+    existing_combinations = get_existing_combinations(excel_file)
+
+    count = 0
+
+    # Generate unique combinations using itertools.combinations
+    all_combinations = combinations(numbers_q1_to_q5, 5)  # Generate combinations for q1 to q5
+    all_combinations = [(comb,) + tuple(numbers_q6_to_q7) for comb in all_combinations]  # Add combinations for q6 to q7
+
+    # Use ThreadPoolExecutor for parallel processing
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(is_combination_unique, combination, existing_combinations) for combination in all_combinations]
+        for future in as_completed(futures):
+            if future.result():
+                count += 1
+
+    return count
+
+def is_combination_unique(combination, existing_combinations):
+    return combination not in existing_combinations
+
+# Usage example
+excel_file = ""  # Replace with the path to your Eurojackpot combination data Excel file
+
+num_unseen_combinations = count_unique_combinations(excel_file)
+
+print("Number of Unseen Combinations:")
+print(num_unseen_combinations)
