@@ -1,4 +1,3 @@
-# TODO Create DB Scheme.
 ## Data Entry script
 import psycopg2
 from psycopg2 import sql
