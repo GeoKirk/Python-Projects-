@@ -1,0 +1,79 @@
+# TODO Create DB Scheme.
+## Data Entry script
+import psycopg2
+from psycopg2 import sql
+from datetime import datetime
+import argparse
+
+# Database connection parameters
+db_params = {
+    'dbname': '*****',
+    'user': '****',
+    'password': '*****',
+    'host': 'localhost',
+    'port': '****'
+}
+
+# Function to insert a record into the Costs table
+def insert_cost(date, category, amount, description, accounting_id=None):
+    conn = None
+    cursor = None
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(**db_params)
+        cursor = conn.cursor()
+
+        # Define the SQL query
+        insert_query = sql.SQL("""
+            INSERT INTO Costs (Date, Category, amount, description, created_at, accounting_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """)
+
+        # Get the current timestamp
+        current_timestamp = datetime.now()
+
+        # Data to be inserted
+        data = (date, category, amount, description, current_timestamp, accounting_id)
+
+        # Execute the query
+        cursor.execute(insert_query, data)
+
+        # Commit the transaction
+        conn.commit()
+
+        # Print a success message
+        print("Record inserted successfully into Costs table")
+
+    except psycopg2.Error as e:
+        print(f"Database error occurred: {e.pgcode or 'No pgcode'} - {e.pgerror or 'No pgerror'}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        # Close the cursor and connection if they were created
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+# Main function to parse command line arguments
+if __name__ == "__main__":
+    # Set up command line argument parsing
+    parser = argparse.ArgumentParser(description='Insert a record into the Costs table.')
+    parser.add_argument('--date', required=True, help='Date of the cost (YYYY-MM-DD)')
+    parser.add_argument('--category', required=True, help='Category of the cost')
+    parser.add_argument('--amount', required=True, type=float, help='Amount of the cost')
+    parser.add_argument('--description', required=True, help='Description of the cost')
+    parser.add_argument('--accounting_id', type=int, help='Accounting ID (optional)')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Validate the date format
+    try:
+        date = datetime.strptime(args.date, '%Y-%m-%d').date()
+    except ValueError:
+        print("Invalid date format. Please use YYYY-MM-DD.")
+        exit(1)
+
+    # Insert the data into the Costs table using the parsed arguments
+    insert_cost(date, args.category, args.amount, args.description, args.accounting_id)
